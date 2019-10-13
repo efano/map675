@@ -18,6 +18,13 @@
       padding: 0;
       background: rgba(0, 0, 0, 0.75);
     }
+
+    .tooltip {
+      color: white;
+      background: #295b97;
+      border: 0;
+      font-size: 1.1em;
+    }
   </style>
 </head>
 
@@ -40,6 +47,58 @@
     };
     const map = L.map("map", options);
 
+    const urbanOptions = {
+      color: "#295b97",
+      weight: 0
+    };
+
+    const cityLimitsOptions = {
+      fillOpacity: 0,
+      color: "#040d18",
+      opacity: 1,
+      weight: 3
+    };
+
+    const neighborhoodOptions = {
+      fillOpacity: 0.3,
+      fillColor: "#e0ecf9",
+      color: "#151f2b",
+      weight: 1,
+      opacity: 1
+    };
+
+    const subwayOptions = {
+      color: "#ff6e00",
+      weight: 2,
+      opacity: 1
+    };
+
+    const busOptions = {
+      color: "#f0f062",
+      weight: 0.1,
+      opacity: 1
+    };
+
+    const tramOptions = {
+      color: "#ff6e00",
+      weight: 2
+    };
+
+    const otherRoutes = {
+      color: "#ff6e00"
+    };
+
+    map.createPane("labels");
+    map.getPane("labels").style.zIndex = 649;
+    map.getPane("labels").style.pointerEvents = "none";
+
+    L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png", {
+        attribution: "©OpenStreetMap, ©CartoDB",
+        pane: "labels"
+      }
+    ).addTo(map);
+
     $.when(
       $.getJSON("data/city-limits.json"),
       $.getJSON("data/neighborhoods-filtered3.json"),
@@ -50,47 +109,6 @@
     });
 
     function drawMap(cityLimitsData, neighborhoodsData, transitRoutesData, urbanAreasData) {
-      const urbanOptions = {
-        color: "#295b97",
-        weight: 0
-      };
-
-      const cityLimitsOptions = {
-        fillOpacity: 0,
-        color: "#040d18",
-        opacity: 1,
-        weight: 3
-      };
-
-      const neighborhoodOptions = {
-        fillOpacity: 0.3,
-        fillColor: "#e0ecf9",
-        color: "#151f2b",
-        weight: 1.7,
-        opacity: 1
-      };
-
-      const subwayOptions = {
-        color: "#ff6e00",
-        weight: 2,
-        opacity: 1
-      };
-
-      const busOptions = {
-        color: "#f0f062",
-        weight: 0.1,
-        opacity: 1
-      };
-
-      const tramOptions = {
-        color: "#ff6e00",
-        weight: 2
-      };
-
-      const otherRoutes = {
-        color: "#ff6e00"
-      };
-
       L.geoJson(urbanAreasData, {
         style: urbanOptions
       }).addTo(map);
@@ -100,7 +118,26 @@
       }).addTo(map);
 
       L.geoJson(neighborhoodsData, {
-        style: neighborhoodOptions
+        style: neighborhoodOptions,
+        onEachFeature: function (feature, layer) {
+          // shortut to variable
+          let tooltip = feature.properties.NEIGHBORHO;
+          // bind the tooltip to the layer
+          layer.bindTooltip(tooltip, {
+            sticky: true,
+            className: "tooltip"
+          });
+          // visual affordance on mouseover
+          layer.on("mouseover", function (e) {
+            this.setStyle({
+              fillOpacity: 0.1
+            });
+          });
+          // use existing option to reset the styles on mouseout
+          layer.on("mouseout", function (e) {
+            this.setStyle(neighborhoodOptions);
+          });
+        }
       }).addTo(map);
 
       L.geoJson(transitRoutesData, {
@@ -119,11 +156,7 @@
             otherRoutes;
         }
       }).addTo(map);
-
-
-
-
-    }
+    };
   </script>
 </body>
 
